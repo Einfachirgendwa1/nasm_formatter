@@ -15,12 +15,42 @@ fn unlikely(cond: bool) -> bool {
 }
 
 pub enum Indentation {
-    Tabs,
+    Tabs { charlen: u32 }, // Like in https://projectacrn.github.io/latest/developer-guides/asm_coding_guidelines.html#asm-cs-06-tabs-shall-be-8-characters-wide
     Spaces { amount: u32 },
 }
 
+// TODO: Implement missing options
 pub struct Settings {
     indentation: Indentation,
+    inline_labels: bool,
+    lowercase_instructions: bool,
+    lowercase_registers: bool,
+    lowercase_custom_names: bool,
+    line_length_limit: Option<u32>,
+    allow_multiline_instructions: bool,
+    align_assembler_directives: bool,
+    align_labels_to_start_of_line: bool,
+    align_instruction_statements: bool,
+    allow_double_slash_comments: bool,
+}
+
+impl Default for Settings {
+    // Mostly following https://projectacrn.github.io/latest/developer-guides/asm_coding_guidelines.html
+    fn default() -> Self {
+        Self {
+            indentation: Indentation::Tabs { charlen: 4 },
+            inline_labels: false,
+            lowercase_instructions: true,
+            lowercase_registers: true,
+            lowercase_custom_names: true,
+            line_length_limit: Some(120),
+            allow_multiline_instructions: false,
+            align_assembler_directives: true,
+            align_labels_to_start_of_line: true,
+            align_instruction_statements: true,
+            allow_double_slash_comments: true,
+        }
+    }
 }
 
 macro_rules! log {
@@ -118,7 +148,7 @@ fn parse_str(
 #[inline]
 fn write_indent(indentation: &Indentation, indent_amount: u32, output: &mut String) {
     match indentation {
-        Indentation::Tabs => {
+        Indentation::Tabs { charlen: _ } => {
             for _ in 0..indent_amount {
                 output.push('\t');
             }
@@ -158,9 +188,7 @@ mod test {
         simple_exit_tabs,
         "test_data/original/simple_exit_tabs.asm",
         "test_data/expected/simple_exit_tabs.asm",
-        Settings {
-            indentation: Indentation::Tabs
-        }
+        Settings::default()
     );
 
     test_format!(
@@ -168,7 +196,8 @@ mod test {
         "test_data/original/simple_exit_spaces.asm",
         "test_data/expected/simple_exit_spaces.asm",
         Settings {
-            indentation: Indentation::Spaces { amount: 2 }
+            indentation: Indentation::Spaces { amount: 2 },
+            ..Default::default()
         }
     );
 
