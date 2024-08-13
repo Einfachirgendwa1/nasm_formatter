@@ -15,7 +15,7 @@ fn unlikely(cond: bool) -> bool {
 }
 
 pub enum Indentation {
-    Tabs { charlen: u32 }, // Like in https://projectacrn.github.io/latest/developer-guides/asm_coding_guidelines.html#asm-cs-06-tabs-shall-be-8-characters-wide
+    Tabs { charlen: u32 },
     Spaces { amount: u32 },
 }
 
@@ -25,30 +25,27 @@ pub struct Settings {
     inline_labels: bool,
     lowercase_instructions: bool,
     lowercase_registers: bool,
-    lowercase_custom_names: bool,
+    lowercase_names: bool,
     line_length_limit: Option<u32>,
     allow_multiline_instructions: bool,
     align_assembler_directives: bool,
     align_labels_to_start_of_line: bool,
     align_instruction_statements: bool,
-    allow_double_slash_comments: bool,
 }
 
 impl Default for Settings {
-    // Mostly following https://projectacrn.github.io/latest/developer-guides/asm_coding_guidelines.html
     fn default() -> Self {
         Self {
             indentation: Indentation::Tabs { charlen: 4 },
             inline_labels: false,
             lowercase_instructions: true,
             lowercase_registers: true,
-            lowercase_custom_names: true,
+            lowercase_names: true,
             line_length_limit: Some(120),
             allow_multiline_instructions: false,
             align_assembler_directives: true,
             align_labels_to_start_of_line: true,
             align_instruction_statements: true,
-            allow_double_slash_comments: true,
         }
     }
 }
