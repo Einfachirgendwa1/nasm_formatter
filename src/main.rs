@@ -58,16 +58,14 @@ macro_rules! log {
 }
 
 fn main() {
+    let out = format(
+        File::open("test.asm").unwrap(),
+        &mut String::new(),
+        &Settings::default(),
+    );
     File::create("test.asm")
         .unwrap()
-        .write(
-            format(
-                File::open("test.asm").unwrap(),
-                &mut String::new(),
-                &Settings::default(),
-            )
-            .as_bytes(),
-        )
+        .write(out.as_bytes())
         .unwrap();
 }
 
@@ -130,6 +128,9 @@ fn parse_str(
     while let Some(next) = chars.next() {
         instruction.push(next);
         if next == ':' || instruction == "section " {
+            if !settings.align_labels_to_start_of_line {
+                write_indent(&settings.indentation, *indent_amount, output);
+            }
             *indent_amount = 1;
             if settings.lowercase_names {
                 output.push_str(instruction.to_lowercase().as_str());
