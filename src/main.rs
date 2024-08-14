@@ -1,6 +1,6 @@
 use std::{
-    fs::{File, OpenOptions},
-    io::{BufRead, BufReader, Read, Write},
+    fs::File,
+    io::{BufRead, BufReader, Write},
 };
 
 #[cold]
