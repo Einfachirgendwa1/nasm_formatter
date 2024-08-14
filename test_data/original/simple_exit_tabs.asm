@@ -2,6 +2,6 @@ section .text
 global _start
 
 _start:
-MOV rax, 60
-MOV rdi, 0
-SYSCALL
+mov rax, 60
+mov rdi, 0
+syscall

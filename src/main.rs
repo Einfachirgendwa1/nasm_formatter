@@ -159,14 +159,16 @@ fn parse_str(
         }
     }
     write_indent(&settings.indentation, *indent_amount, output);
-    let mut instruction = instruction.split(|c| c == ' ');
+    let mut instruction = instruction.split(|c| c == ' ').peekable();
     let operation = unsafe { instruction.next().unwrap_unchecked() };
     if settings.lowercase_instructions {
         output.push_str(operation.to_lowercase().as_str());
     } else {
         output.push_str(operation.to_uppercase().as_str());
     }
-    output.push(' ');
+    if instruction.peek() != None {
+        output.push(' ');
+    }
 
     // TODO: Support for smth like [rax + 8]
     while let Some(arg) = instruction.next() {
@@ -174,6 +176,11 @@ fn parse_str(
         if arg.contains(';') {
             arg = arg.chars().take_while(|c| *c != ';').collect();
         }
+
+        if arg.ends_with(',') {
+            arg.push(' ');
+        }
+
         // FIXME: Not every arg is a register
         if settings.lowercase_registers {
             output.push_str(arg.to_lowercase().as_str());
