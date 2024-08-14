@@ -1,6 +1,6 @@
 use std::{
-    fs::File,
-    io::{BufRead, BufReader},
+    fs::{File, OpenOptions},
+    io::{BufRead, BufReader, Read, Write},
 };
 
 #[cold]
@@ -57,7 +57,19 @@ macro_rules! log {
     };
 }
 
-fn main() {}
+fn main() {
+    File::create("test.asm")
+        .unwrap()
+        .write(
+            format(
+                File::open("test.asm").unwrap(),
+                &mut String::new(),
+                &Settings::default(),
+            )
+            .as_bytes(),
+        )
+        .unwrap();
+}
 
 #[inline]
 pub fn format(file: File, log_buffer: &mut String, settings: &Settings) -> String {
@@ -119,7 +131,11 @@ fn parse_str(
         instruction.push(next);
         if next == ':' || instruction == "section " {
             *indent_amount = 1;
-            output.push_str(instruction.as_str());
+            if settings.lowercase_names {
+                output.push_str(instruction.to_lowercase().as_str());
+            } else {
+                output.push_str(instruction.to_uppercase().as_str());
+            }
 
             if next != ':' {
                 while let Some(c) = chars.next() {
@@ -129,8 +145,13 @@ fn parse_str(
                     }
                 }
             }
+
             let the_rest = chars.collect::<String>().trim().to_string();
-            output.push('\n');
+            if settings.inline_labels {
+                output.push(' ');
+            } else {
+                output.push('\n');
+            }
             if !the_rest.is_empty() {
                 parse_str(&the_rest, output, log_buffer, indent_amount, settings);
             }
@@ -138,7 +159,29 @@ fn parse_str(
         }
     }
     write_indent(&settings.indentation, *indent_amount, output);
-    output.push_str(instruction.as_str());
+    let mut instruction = instruction.split(|c| c == ' ');
+    let operation = unsafe { instruction.next().unwrap_unchecked() };
+    if settings.lowercase_instructions {
+        output.push_str(operation.to_lowercase().as_str());
+    } else {
+        output.push_str(operation.to_uppercase().as_str());
+    }
+    output.push(' ');
+
+    // TODO: Support for smth like [rax + 8]
+    while let Some(arg) = instruction.next() {
+        let mut arg = arg.to_string();
+        if arg.contains(';') {
+            arg = arg.chars().take_while(|c| *c != ';').collect();
+        }
+        // FIXME: Not every arg is a register
+        if settings.lowercase_registers {
+            output.push_str(arg.to_lowercase().as_str());
+        } else {
+            output.push_str(arg.to_uppercase().as_str());
+        }
+    }
+
     output.push('\n');
 }
 
