@@ -1,6 +1,7 @@
 use std::{
     fs::File,
     io::{BufRead, BufReader, Write},
+    mem::MaybeUninit,
 };
 
 #[cold]
@@ -54,6 +55,12 @@ macro_rules! log {
     ($buffer:expr, $($e:expr), *) => {
         println!($($e, )*);
         $buffer.push_str(&format!($($e, )*));
+    };
+}
+
+macro_rules! run {
+    ($do:block while $cond:expr) => {
+        while {$do $cond} {}
     };
 }
 
@@ -123,9 +130,39 @@ fn parse_str(
         return;
     }
 
+    if first_char == ';' {
+        write_indent(&settings.indentation, *indent_amount, output);
+
+        let mut next;
+        run!( { output.push(';'); } while {
+            next = match chars.next() {
+                Some(next) => MaybeUninit::new(next),
+                None => {
+                    output.push('\n');
+                    return;
+                }
+            };
+            unsafe { next.assume_init() == ';' }
+            }
+        );
+        let next = unsafe { next.assume_init() };
+        if next.is_whitespace() {
+            output.push(' ');
+            output.push(next);
+        }
+        while let Some(next) = chars.next() {
+            output.push(next);
+        }
+        output.push('\n');
+        return;
+    }
+
     let mut instruction = String::from(first_char);
 
     while let Some(next) = chars.next() {
+        if next == ';' {
+            break;
+        }
         instruction.push(next);
         if next == ':' || instruction == "section " {
             if !settings.align_labels_to_start_of_line {
